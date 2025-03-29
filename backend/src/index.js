@@ -1,4 +1,5 @@
 import express from "express"
+import { pool, sequelize } from "./db.js"; // DB connection
 import authRoutes from "./routes/auth.route.js"
 import booksData from "./routes/booksData.route.js"
 
@@ -10,3 +11,5 @@ app.use("/api/getbooksdata", booksData)
 app.listen(5001, () => {
     console.log("Server is running on port 5001")
 })
+
+// sequelize.sync() keep it forever or once???
