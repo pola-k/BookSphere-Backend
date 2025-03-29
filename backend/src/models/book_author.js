@@ -1,4 +1,4 @@
-import { sequelize } from "./db.js";
+import { sequelize } from "../db.js";
 
 const BookAuthor = sequelize.define(
     "BookAuthor",

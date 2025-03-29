@@ -1,17 +1,17 @@
-import User from "./User.js";
-import Post from "./Post.js";
+import User from "./user.js";
+import Post from "./post.js";
 import SavedPost from "./saved_post.js";
-import Comment from "./Comment.js";
-import Book from "./Book.js";
+import Comment from "./comment.js";
+import Book from "./book.js";
 import Author from "./author.js";
 import Genre from "./genre.js";
 import BooksList from "./books_list.js";
 import BookGenre from "./book_genre.js";
 import BookAuthor from "./book_author.js";
-import Review from "./Review.js";
-import Rating from "./Rating.js";
+import Review from "./review.js";
+import Rating from "./rating.js";
 import Summary from "./summary.js";
-import PaymentPlan from "./PaymentPlan.js";
+import PaymentPlan from "./payment_plan.js";
 import PostLikes from "./post_likes.js";
 
 // User can have many posts

@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import { sequelize } from "../db";
+import { sequelize } from "../db.js";
 
 const User = sequelize.define(
     "User",
@@ -35,7 +35,7 @@ const User = sequelize.define(
             type: DataTypes.TEXT,
         },
         plan_id: {
-            type: DataTypes.UUID,
+            type: DataTypes.INTEGER,
             allowNull: true,
             references: {
                 model: "payment_plans",
