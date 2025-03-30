@@ -30,7 +30,7 @@ const Comment = sequelize.define(
             onUpdate: "CASCADE",
             onDelete: "CASCADE",
         },
-        parent_id: {
+        parent_id: {    // default value may be set to NULL
             type: DataTypes.UUID,
             allowNull: true,
             references: {
