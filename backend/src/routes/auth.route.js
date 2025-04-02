@@ -1,8 +1,12 @@
 import express from "express"
+import multer from "multer"
+import { upload } from "../middleware/multer.middleware.js"
 import { login, Logout, singup } from "../controllers/auth.controller.js"
 import { GetComments, CreateComment, DeleteComment, EditComment } from "../controllers/comments.controller.js"
+import { GetPosts, CreateTextPost, CreateMediaPost, DeletePost } from "../controllers/posts.controller.js"
 import authMiddleware from "../middleware/auth.middleware.js"
 import GetUser from "../controllers/user.controller.js"
+
 const router = express.Router()
 
 router.post("/signup", singup)
@@ -19,5 +23,27 @@ router.put("/update-comment", EditComment)
 
 // user ki profile ka data access karna 
 router.get("/profile/", GetUser)
+
+router.get("/get-posts", GetPosts)
+router.post("/create-text-post", CreateTextPost)
+router.post("/create-media-post", upload.array("media", 10), (req, res, next) => {
+    try {
+        CreateMediaPost(req, res);
+    } catch (err) {
+        next(err);
+    }
+});
+
+// Custom error handler
+router.use((err, req, res, next) => {
+    
+    if (err.status === 400) {
+        return res.status(err.status).json({ message: err.message });
+    }
+
+    res.status(500).json({ message: err.message });
+});
+
+router.delete("/delete-post", DeletePost)
 
 export default router

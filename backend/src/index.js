@@ -1,5 +1,5 @@
 import express from "express"
-import { pool, sequelize } from "./db.js"; // DB connection
+import { sequelize, s3 } from "./db.js"; // DB connection
 import authRoutes from "./routes/auth.route.js"
 import booksData from "./routes/booksData.route.js"
 
@@ -13,4 +13,4 @@ app.listen(5001, () => {
     console.log("Server is running on port 5001")
 })
 
-export { sequelize };
+export { sequelize, s3 };

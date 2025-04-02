@@ -67,6 +67,7 @@ const DeleteComment = async (request, response) => {
             return response.status(404).json({ error: "Comment Not Found" })
         }
 
+        await comment.destroy()
         return response.status(200).json({ message: "Comment Deleted Successfully"})
 
     } catch (err){

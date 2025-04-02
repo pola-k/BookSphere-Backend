@@ -1,6 +1,5 @@
-import pkg from 'pg'
-const { Pool } = pkg;
 import { Sequelize } from "sequelize";
+import { S3 } from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -22,25 +21,29 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
     }
 });
 
-const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT || 5432,
-    ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false
-});
-
 sequelize.authenticate()
     .then(() => console.log("✅ Sequelize Connected"))
     .catch(err => console.error("❌ Sequelize Connection Error:", err));
 
-pool.query("SELECT NOW()", (err, res) => {
-    if (err) {
-        console.error("❌ Pool Connection Error:", err);
-    } else {
-        console.log("✅ Pool Connected - Time:", res.rows[0].now);
-    }
+
+const s3 = new S3({
+    endpoint: process.env.R2_ENDPOINT,
+    credentials: {
+        accessKeyId: process.env.R2_ACCESS_KEY,
+        secretAccessKey: process.env.R2_SECRET_KEY,
+    },
+    region: "auto",
 });
 
-export { sequelize, pool };
+const testConnection = async () => {
+    try {
+        const response = await s3.listBuckets();
+        console.log("✅ Connection successful! Buckets:", response.Buckets);
+    } catch (error) {
+        console.error("❌ Connection failed:", error.message);
+    }
+};
+
+testConnection();
+
+export { sequelize, s3 };
