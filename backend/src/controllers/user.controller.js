@@ -1,5 +1,9 @@
 import User from "../models/user.js";
 import bcrypt from "bcrypt";
+import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
+import dotenv from "dotenv";
+dotenv.config();
 const GetUser = async (req, res) => {
 
   try {
@@ -29,6 +33,7 @@ const signup = async (req, res) => {
     const  name = req.query.name;
     const  image= req.query.image;
 
+    const uid = uuidv4();
     if(!username) {
       return res.status(400).json({ message: "Username is required" });
     }
@@ -41,7 +46,7 @@ const signup = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const existingUser = await User.findOne({ where: { email , username } });
+    const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       return res.status(400).json({ message: "Email or username   already in use" });
     }
@@ -49,6 +54,7 @@ const signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
+      id: uid,
       username,
       email,
       password: hashedPassword,
@@ -57,11 +63,15 @@ const signup = async (req, res) => {
       image: image || "", // Default to empty string if not provided
     });
 
+    const you = process.env.JWT_SECRET;
+
+    // return res.status(200).json({message : you});
     const token = jwt.sign(
-      { id: newUser.id, email: newUser.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+
+       { id: newUser.id, email: newUser.email },
+        process.env.JWT_SECRET,
+       { expiresIn: "1h" }
+     );
 
     return res.status(201).json({ 
       message: "User created successfully", 
@@ -76,8 +86,8 @@ const signup = async (req, res) => {
       }
     });
   } catch (error) {
-    // return res.status(500).json({ error: error.message || "Internal server error" });
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: error.message || "Internal server error" });
+    // return res.status(500).json({ error: "Internal server error" });
   }
 };
 const Login = async (req, res) => {
@@ -85,9 +95,13 @@ const Login = async (req, res) => {
     const email = req.query.email;
     const password = req.query.password;
 
+
+
+
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
     }
+
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
@@ -108,7 +122,7 @@ const Login = async (req, res) => {
     return res.status(200).json({ 
       message: "Login successful", 
       token,
-      user: { 
+      user: {
         id: user.id, // Include UUID
         username: user.username, 
         email: user.email, 

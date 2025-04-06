@@ -1,23 +1,23 @@
+import jwt from 'jsonwebtoken';
 const authMiddleware = async (request, response) => {
-    
-    //  define authentication steps
-}
-
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers["authorization"]; // Get token from headers
-  const token = authHeader && authHeader.split(" ")[1]; // Extract token from "Bearer TOKEN"
+   // Get the token from the Authorization header
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ message: "Unauthorized: No token provided" });
+    return res.status(401).json({ message: 'No token provided' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  // Verify the token using the secret key from your .env file
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(403).json({ message: "Forbidden: Invalid token" });
+      return res.status(403).json({ message: 'Failed to authenticate token' });
     }
-    req.user = user; // Store the decoded user info in request
-    next(); // Move to the next middleware or route
+    // Attach the decoded user info to the request object
+    req.user = decoded;
+    next();
   });
-};
+}
 
-export { authMiddleware , authenticateToken };
+// If you prefer to use a different name, you can also export it as authMiddleware
+export { authMiddleware };

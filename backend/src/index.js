@@ -2,7 +2,7 @@ import express from "express"
 import { pool, sequelize } from "./db.js"; // DB connection
 import authRoutes from "./routes/auth.route.js"
 import booksData from "./routes/booksData.route.js"
-
+import dotenv from "dotenv";
 const app = express()
 app.use(express.json());
 
