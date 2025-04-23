@@ -39,7 +39,7 @@ User.belongsToMany(Book, { through: BooksList, foreignKey: "user_id" });
 Book.belongsToMany(User, { through: BooksList, foreignKey: "book_id" });
 
 // User can have a payment plan
-User.belongsTo(PaymentPlan, { foreignKey: "plan_id" }); 
+User.belongsTo(PaymentPlan, { foreignKey: "plan_id", as: "plan" });
 PaymentPlan.hasMany(User, { foreignKey: "plan_id" });
 
 // Reviews and ratings belong to users
@@ -68,5 +68,7 @@ Author.belongsToMany(Book, { through: BookAuthor });
 // Each book may have one summary
 Book.hasOne(Summary, { foreignKey: "book_id", onDelete: "CASCADE" });
 Summary.belongsTo(Book, { foreignKey: "book_id" });
+
+
 
 export default { User, Post, SavedPost, Comment, Book, Author, Genre, BooksList, BookGenre, BookAuthor, Review, Rating, Summary, PaymentPlan, PostLikes };

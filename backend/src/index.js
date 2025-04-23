@@ -2,6 +2,7 @@ import express from "express"
 import { pool, sequelize } from "./db.js"; // DB connection
 import authRoutes from "./routes/auth.route.js"
 import booksData from "./routes/booksData.route.js"
+import './models/assoications.js';
 
 const app = express()
 app.use(express.json());

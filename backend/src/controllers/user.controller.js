@@ -1,4 +1,7 @@
 import User from "../models/user.js";
+import PaymentPlan from '../models/payment_plan.js';
+import { Op } from "sequelize";
+
 
 const GetUser = async (req, res) => {
 
@@ -48,4 +51,54 @@ const Signup = async (req, res) => {
     return res.status(500).json({ error: error.message || "Internal server error" });
   }
 };
-export default GetUser;
+
+const setUserPlan = async (req, res) => {
+  const { userId, plan_id } = req.body;
+
+  try {
+    // Check if plan exists
+    const plan = await PaymentPlan.findByPk(plan_id);
+    if (!plan) {
+      return res.status(404).json({ message: "Payment plan not found." });
+    }
+
+    // Find user
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Update user plan
+    user.plan_id = plan_id;
+    await user.save();
+
+    return res.status(200).json({ message: `User plan set to ${plan_id}`, user });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || "Internal Server Error" });
+  }
+};
+
+
+const GetSubscribedUsers = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      where: {
+        plan_id: {
+          [Op.not]: null
+        }
+      },
+      include: [
+        {
+          model: PaymentPlan,
+          as: "plan"
+        }
+      ]
+    });
+
+    return res.status(200).json({ users });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || "Internal Server Error" });
+  }
+};
+
+export default GetSubscribedUsers;

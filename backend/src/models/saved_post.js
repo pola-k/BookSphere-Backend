@@ -1,12 +1,13 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../db.js";
 
-const SavedPosts = sequelize.define(
-    "SavedPosts",
+const SavedPost = sequelize.define(
+    "SavedPost",
     {
         user_id: {
             type: DataTypes.UUID,
             allowNull: false,
+            primaryKey: true,
             references: {
                 model: "users",
                 key: "id",
@@ -17,6 +18,7 @@ const SavedPosts = sequelize.define(
         post_id: {
             type: DataTypes.UUID,
             allowNull: false,
+            primaryKey: true,
             references: {
                 model: "posts",
                 key: "id",
@@ -31,4 +33,4 @@ const SavedPosts = sequelize.define(
     }
 )
 
-export default SavedPosts;
+export default SavedPost;
