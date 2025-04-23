@@ -1,7 +1,11 @@
 import express from "express"
 import { sequelize, s3 } from "./db.js"; // DB connection
 import authRoutes from "./routes/auth.route.js"
-import booksData from "./routes/booksData.route.js"
+import booksData from "./routes/getBooksData.route.js"
+import listRoutes from "./routes/list.route.js"
+import ratingRoutes from "./routes/rating.route.js"
+import reviewRoutes from "./routes/review.route.js"
+import cors from "cors"
 
 const app = express()
 
