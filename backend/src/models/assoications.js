@@ -2,12 +2,12 @@ import User from "./user.js";
 import Post from "./post.js";
 import SavedPost from "./saved_post.js";
 import Comment from "./comment.js";
-import Book from "./book.js";
-import Author from "./author.js";
-import Genre from "./genre.js";
+import Book from "./Book.js";
+import Author from "./Author.js";
+import Genre from "./Genre.js";
 import BooksList from "./books_list.js";
-import BookGenre from "./book_genre.js";
-import BookAuthor from "./book_author.js";
+import BookGenre from "./Book_Genre.js";
+import BookAuthor from "./Book_Author.js";
 import Review from "./review.js";
 import Rating from "./rating.js";
 import Summary from "./summary.js";
@@ -58,12 +58,12 @@ Book.hasMany(Rating, { foreignKey: "book_id" });
 Rating.belongsTo(Book, { foreignKey: "book_id" });
 
 // Book - Genre Junction Table
-Book.belongsToMany(Genre, { through: BookGenre });
-Genre.belongsToMany(Book, { through: BookGenre });
+Book.belongsToMany(Genre, { through: BookGenre, foreignKey: 'BookId'});
+Genre.belongsToMany(Book, { through: BookGenre, foreignKey: 'GenreId'});
 
 // Book - Author Junction Table
-Book.belongsToMany(Author, { through: BookAuthor });
-Author.belongsToMany(Book, { through: BookAuthor });
+Book.belongsToMany(Author, { through: BookAuthor, foreignKey: 'BookId'});
+Author.belongsToMany(Book, { through: BookAuthor, foreignKey: "AuthorId" });
 
 // Each book may have one summary
 Book.hasOne(Summary, { foreignKey: "book_id", onDelete: "CASCADE" });
