@@ -5,7 +5,7 @@
 // export const login = (req, res) => {
 //     res.send("Login Route")
 // }
-
-export const Logout = (req, res) => {
-    res.send("Logout Route")
-}
+//
+// export const Logout = (req, res) => {
+//     res.send("Logout Route")
+// }

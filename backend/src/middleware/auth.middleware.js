@@ -20,4 +20,4 @@ const authMiddleware = async (request, response) => {
 }
 
 // If you prefer to use a different name, you can also export it as authMiddleware
-export { authMiddleware };
+export default { authMiddleware };
