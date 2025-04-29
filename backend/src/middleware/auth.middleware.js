@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-const authMiddleware = async (request, response) => {
+export const authMiddleware = async (request, response) => {
    // Get the token from the Authorization header
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -20,4 +20,4 @@ const authMiddleware = async (request, response) => {
 }
 
 // If you prefer to use a different name, you can also export it as authMiddleware
-export { authMiddleware };
+export default { authMiddleware };

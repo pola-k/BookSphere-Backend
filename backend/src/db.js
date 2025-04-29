@@ -3,20 +3,20 @@ import { S3 } from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
 dotenv.config();
 
-const sequelize = new Sequelize("postgres", "postgres.evvmvlyrxbzjgbwvnuom", "5F0H7XZ@#V$eAt4EH9L9Z", {
-    host: "aws-0-ap-southeast-1.pooler.supabase.com",
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+    host: process.env.DB_HOST,
     dialect: "postgres",
     logging: false,
     pool: {
         max: 10,
         min: 0,
-        acquire: 30000, // Timeout for acquiring connection
-        idle: 10000 // Timeout before releasing idle connection
+        acquire: 30000,
+        idle: 10000
     },
     dialectOptions: {
         ssl: {
             require: true,
-            rejectUnauthorized: false // Use `false` if your certificate isn't verified
+            rejectUnauthorized: false
         }
     }
 });
