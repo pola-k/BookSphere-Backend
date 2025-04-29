@@ -92,8 +92,7 @@ const signup = async (req, res) => {
 };
 const Login = async (req, res) => {
   try {
-    const email = req.query.email;
-    const password = req.query.password;
+    const {email,password} = req.body;
 
 
 
@@ -105,12 +104,12 @@ const Login = async (req, res) => {
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const token = jwt.sign(

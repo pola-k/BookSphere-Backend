@@ -6,7 +6,6 @@ import listRoutes from "./routes/list.route.js"
 import ratingRoutes from "./routes/rating.route.js"
 import reviewRoutes from "./routes/review.route.js"
 import cors from "cors"
-
 const app = express()
 
 app.use(express.json());
@@ -16,7 +15,6 @@ app.use("/api/getbooksdata", booksData)
 app.use("/api/list", listRoutes)
 app.use("/api/rating", ratingRoutes)
 app.use("/api/review", reviewRoutes)
-
 
 app.listen(5001, () => {
     console.log("Server is running on port 5001")

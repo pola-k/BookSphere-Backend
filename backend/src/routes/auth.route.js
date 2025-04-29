@@ -1,7 +1,6 @@
 import express from "express"
 import multer from "multer"
 import { upload } from "../middleware/multer.middleware.js"
-import { login, Logout, singup } from "../controllers/auth.controller.js"
 import { GetComments, CreateComment, DeleteComment, EditComment } from "../controllers/comments.controller.js"
 import { GetPosts, CreateTextPost, CreateMediaPost, DeletePost } from "../controllers/posts.controller.js"
 import { authMiddleware } from "../middleware/auth.middleware.js"
@@ -9,9 +8,7 @@ import { GetUser , signup , Login } from "../controllers/user.controller.js"
 import { GetRatings , SubmitRating  } from "../controllers/rating.controllers.js"
 const router = express.Router()
 
-
-
-router.post("/logout", Logout)
+// router.post("/logout", Logout)
 
 
 router.get("/get-comments", GetComments)
