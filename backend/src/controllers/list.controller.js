@@ -1,5 +1,5 @@
 import { Sequelize} from "sequelize"
-import Book from "../models/Book.js"
+import Book from "../models/book.js"
 import List from "../models/books_list.js"
 import assoications from "../models/assoications.js"
 
