@@ -1,5 +1,5 @@
 import Review from "../models/review.js";
-import assoications from "../models/assoications.js";
+import assoications from "../models/associations.js";
 
 export const postReview = async (req, res) => {
     try 

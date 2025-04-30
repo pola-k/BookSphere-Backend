@@ -1,7 +1,7 @@
 import { Sequelize} from "sequelize"
 import Book from "../models/book.js"
 import List from "../models/books_list.js"
-import assoications from "../models/assoications.js"
+import assoications from "../models/associations.js"
 
 export const getUserList = async (req, res) => {
     try 
