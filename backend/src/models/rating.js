@@ -4,15 +4,10 @@ import { sequelize } from "../db.js";
 const Rating = sequelize.define(
     "Rating",
     {
-        id: {
-            type: DataTypes.INTEGER,
-            autoIncrement: true,
-            primaryKey: true,
-            allowNull: false,
-        },
         user_id: {
             type: DataTypes.UUID,
             allowNull: false,
+            primaryKey: true,
             references: {
                 model: "users",
                 key: "id",
@@ -23,6 +18,7 @@ const Rating = sequelize.define(
         book_id: {
             type: DataTypes.UUID,
             allowNull: false,
+            primaryKey: true,
             references: {
                 model: "books",
                 key: "id",
@@ -39,6 +35,6 @@ const Rating = sequelize.define(
         tableName: "ratings",
         timestamps: false,
     }
-)
+);
 
 export default Rating;
