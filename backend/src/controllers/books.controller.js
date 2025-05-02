@@ -1,12 +1,10 @@
 import { Sequelize} from "sequelize"
-import Book from "../models/Book.js"
-import Author from "../models/Author.js"
-import Genre from "../models/Genre.js"
+import Book from "../models/book.js"
+import Author from "../models/author.js"
+import Genre from "../models/genre.js"
 import Book_Author from "../models/book_author.js"
 import Book_Genre from "../models/book_genre.js"
-import assoications from "../models/assoications.js"
-import Review from "../models/review.js"
-import Rating from "../models/rating.js"
+import assoications from "../models/associations.js"
 
 export const getBooksDataByGenre = async (req, res) => {
     const genre = req.params.genre;
@@ -62,12 +60,6 @@ export const getBooksDataByGenre = async (req, res) => {
                 {
                     model: Author,
                     through: { attributes: [] }
-                },
-                {
-                    model: Review
-                },
-                {
-                    model: Rating
                 },
             ]
         });
@@ -127,12 +119,6 @@ export const getLatestBooksData = async (req, res) => {
                     model: Author,
                     through: { attributes: [] }
                 },
-                {
-                    model: Review,
-                },
-                {
-                    model: Rating
-                },
             ]
         });
 
@@ -181,12 +167,6 @@ export const getBooksDataById = async (req, res) => {
                 model: Genre,
                 through: { attributes: [] }
               },
-              {
-                model: Review
-              },
-              {
-                model: Rating
-              }
             ]
           });
           
@@ -265,12 +245,6 @@ export const getTrendingBooksData = async (req, res) => {
               {
                   model: Author,
                   through: { attributes: [] }
-              },
-              {
-                  model: Review,
-              },
-              {
-                  model: Rating
               },
           ]
       });

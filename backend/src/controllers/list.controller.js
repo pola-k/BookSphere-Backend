@@ -1,32 +1,29 @@
 import { Sequelize} from "sequelize"
-import Book from "../models/Book.js"
+import Book from "../models/book.js"
 import List from "../models/books_list.js"
-import assoications from "../models/assoications.js"
+import associations from "../models/associations.js"
 
 export const getUserList = async (req, res) => {
     try 
     {
-        const userId = req.user.id;
-
-        const lists = await List.findAll({
+        const userId = req.query.user_id;
+        const booksListEntries = await List.findAll({
             where: { user_id: userId },
-            include: [
-                {
-                    model: Book,
-                    through: { attributes: [] }
-                }
-            ]
+            attributes: ['book_id']
         });
 
-        if (lists.length === 0) 
-        {
-            return res.status(404).json({ message: "No lists found for this user" });
-        }
+        const bookIds = booksListEntries.map(entry => entry.book_id);
+        const books = await Book.findAll({
+            where: {
+                id: bookIds
+            }
+        });
 
-        return res.status(200).json(lists);
-    }
-    catch
+        return res.status(200).json(books);
+    } 
+    catch (err) 
     {
+        console.error("Get user list error:", err);
         return res.status(500).json({ message: "Internal server error" });
     }
 }
@@ -34,8 +31,8 @@ export const getUserList = async (req, res) => {
 export const addBookToList = async (req, res) => {
     try 
     {
-        const user_id = req.user.id;
-        const book_id = req.book.id;
+        const { user_id, book_id } = req.body;
+        console.log(user_id, book_id);
 
         const new_record = await List.create({
             user_id: user_id,
@@ -54,8 +51,8 @@ export const removeBookFromList = async (req, res) =>
 {
     try
     {
-        const userId = req.user.id;
-        const bookId = req.book.id;
+        const userId = req.query.user_id;
+        const bookId = req.query.book_id;
 
         const list = await List.findOne({
             where: { user_id: userId, book_id: bookId }
@@ -63,12 +60,37 @@ export const removeBookFromList = async (req, res) =>
         
         if (!list) 
         {
-            return res.status(404).json({ message: "Book not found in list" });
+            return res.status(404).json({status: "false" });
         }
 
         await list.destroy();
-        return res.status(200).json({ message: "Book removed from list" });
+        return res.status(200).json({ status: "true" });
     }
+    catch
+    {
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export const CheckBookStatus = async (req, res) => {
+    try 
+    {
+        const userId = req.query.user_id;
+        const bookId = req.query.book_id;
+
+        const list = await List.findOne({
+            where: { user_id: userId, book_id: bookId }
+        });
+
+        if (list) 
+        {
+            return res.status(200).json({ status: "true" });
+        } 
+        else 
+        {
+            return res.status(200).json({ status: "false" });
+        }
+    } 
     catch
     {
         return res.status(500).json({ message: "Internal server error" });

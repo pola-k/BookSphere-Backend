@@ -34,6 +34,11 @@ const Review = sequelize.define(
             type: DataTypes.TEXT,
             allowNull: false,
         },
+        time: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.NOW
+        },
     },
     {
         tableName: "reviews",
