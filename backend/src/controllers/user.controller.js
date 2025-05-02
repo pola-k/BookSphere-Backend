@@ -4,35 +4,10 @@ import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import dotenv from "dotenv";
 dotenv.config();
-const GetUser = async (req, res) => {
 
-  try {
-    const userId = req.query.id;
-    if(!userId) {
-      return res.status(400).json({ message: "User id is required " });
-    }
-    // const user = await User.findByPk(userId);
-    
-    const user = await User.findOne({ where: { id: userId } });
-    if(!user) {
-      return res.status(400).json({ message: "User not found" });
-    }
-    return res.status(200).json({ user });
-  }
-  catch (error) {
-    return res.status(500).json({error: error.message || "Internal server error" });
-  }
-};
 const signup = async (req, res) => {
   try {
-
-    const  username= req.query.username;
-    const  email = req.query.email;
-    const  password = req.query.password;
-    const  bio = req.query.bio;
-    const  name = req.query.name;
-    const  image= req.query.image;
-
+    const { username,password,email}= req.body;
     const uid = uuidv4();
     if(!username) {
       return res.status(400).json({ message: "Username is required" });
@@ -42,7 +17,7 @@ const signup = async (req, res) => {
       return res.status(400).json({message : "email is required"});
     }
 
-    if (!username || !email || !password || !name) {
+    if (!username || !email || !password ) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -57,10 +32,10 @@ const signup = async (req, res) => {
       id: uid,
       username,
       email,
+      name : "default",
       password: hashedPassword,
-      name,
-      bio: bio || "", // Default to empty string if not provided
-      image: image || "", // Default to empty string if not provided
+      bio:  "", // Default to empty string if not provided
+      image:  "", // Default to empty string if not provided
     });
 
     const you = process.env.JWT_SECRET;
@@ -72,18 +47,14 @@ const signup = async (req, res) => {
         process.env.JWT_SECRET,
        { expiresIn: "1h" }
      );
-
+     res.cookie("token", token, {
+      httpOnly: false,    // Cannot be accessed by JS
+      secure: false,      // Enable in production (HTTPS only)
+      sameSite: 'Lax', // Prevent CSRF
+      });
     return res.status(201).json({ 
       message: "User created successfully", 
-      token,
-      user: { 
-        id: newUser.id, // Include UUID
-        username: newUser.username, 
-        email: newUser.email, 
-        name: newUser.name, 
-        bio: newUser.bio, 
-        image: newUser.image 
-      }
+      user_id: newUser.id
     });
   } catch (error) {
     return res.status(500).json({ error: error.message || "Internal server error" });
@@ -118,20 +89,94 @@ const Login = async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    return res.status(200).json({ 
-      message: "Login successful", 
-      token,
-      user: {
-        id: user.id, // Include UUID
-        username: user.username, 
-        email: user.email, 
-        name: user.name, 
-        bio: user.bio, 
-        image: user.image 
-      }
+
+// Set HTTP-only cookie
+    res.cookie("token", token, {
+      httpOnly: false,    // Cannot be accessed by JS
+      secure: false,      // Enable in production (HTTPS only)
+      sameSite: 'Lax', // Prevent CSRF
     });
+    // Send user_id to frontend (for sessionStorage)
+    return res.status(200).json({ 
+      success: true,
+      user_id: user.id  // Frontend will store this in sessionStorage
+    });
+    // return res.status(200).json({ 
+    //   message: "Login successful", 
+    //   token,
+    //   user: {
+    //     id: user.id, // Include UUID
+    //     username: user.username, 
+    //     email: user.email, 
+    //     name: user.name, 
+    //     bio: user.bio, 
+    //     image: user.image 
+    //   }
+    // });
   } catch (error) {
     return res.status(500).json({ error: error.message || "Internal server error" });
+  }
+};
+ 
+
+
+const GetUser = async (req, res) => {
+  try {
+    // return res.status(200).json({message:"profile mil gai"})
+    // 1. Verify the HTTP-only cookie (JWT token)
+
+
+    const token = req.cookies?.token;
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized: No token provided" });
+    }
+
+    // return res.status(200).json({message:"profile mil gai"});
+    // 2. Verify the token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // 3. Check if requested user ID matches token's userId (prevent data leaks)
+    // return res.status(200).json({ my_id : decoded.id,
+        // });
+    if (decoded.id !== req.params.user_id) {
+      return res.status(403).json({ error: "forbidden: You can only access your own profile" });
+    }
+
+    // 4. Fetch user from database
+    const user = await User.findOne(
+      {
+      where: { 
+
+        id:req.params.user_id
+      },
+        attributes: { exclude: ['password', 'resetToken'] }
+      });
+
+    if (!user) {
+      return res.status(404).json({ error: "User  is not found" });
+    }
+
+    // 5. Return safe user data
+    return res.status(200).json({
+      id: user.id,
+      username: user.username,
+      fullName: user.name,
+      description: user.bio || "", // Handle null values
+      imageUrl: user.image || "/default-profile-pic.jpg" // Fallback image
+    });
+
+  } catch (error) {
+    console.error("Profile API error:", error);
+    
+    // Handle specific JWT errors
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: "Token expired" });
+    }
+
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 export  {GetUser , signup , Login}
