@@ -5,24 +5,23 @@ import jwt from 'jsonwebtoken';
 import dotenv from "dotenv";
 dotenv.config();
 const GetUser = async (req, res) => {
-
   try {
-    const userId = req.query.id;
-    if(!userId) {
-      return res.status(400).json({ message: "User id is required " });
+    const userId = req.params.id;  // ✅ Corrected line
+    if (!userId) {
+      return res.status(400).json({ message: "User id is required" });
     }
-    // const user = await User.findByPk(userId);
-    
+
     const user = await User.findOne({ where: { id: userId } });
-    if(!user) {
-      return res.status(400).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-    return res.status(200).json({ user });
-  }
-  catch (error) {
-    return res.status(500).json({error: error.message || "Internal server error" });
+
+    return res.status(200).json(user); // Or `{ user }` if frontend expects it nested
+  } catch (error) {
+    return res.status(500).json({ error: error.message || "Internal server error" });
   }
 };
+
 const signup = async (req, res) => {
   try {
 
