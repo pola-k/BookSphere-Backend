@@ -69,7 +69,13 @@ const GetSavedPosts = async (req, res) => {
             return res.status(400).json({ error: "user_id cannot be null" });
         }
 
-        const savedPosts = await SavedPost.findAll({ where: { user_id: userID } });
+        const savedPosts = await SavedPost.findAll({
+            where: { user_id: userID },
+            include: [{
+                model: Post,
+                as: 'post' // must match the alias used in association
+            }]
+        });
 
         return res.status(200).json({ saved_posts: savedPosts });
     } catch (err) {

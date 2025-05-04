@@ -18,6 +18,9 @@ import PostLikes from "./post_likes.js";
 User.hasMany(Post, { foreignKey: "user_id" });
 Post.belongsTo(User, { foreignKey: "user_id" });
 
+SavedPost.belongsTo(Post, { foreignKey: "post_id", as: "post" });
+
+
 // User can have many comments
 User.hasMany(Comment, { foreignKey: "user_id" });
 Comment.belongsTo(User, { foreignKey: "user_id" });
