@@ -2,7 +2,7 @@ import express from "express"
 import multer from "multer"
 import { upload } from "../middleware/multer.middleware.js"
 import { GetComments, CreateComment, DeleteComment, EditComment } from "../controllers/comments.controller.js"
-import { GetPosts, CreateTextPost, CreateMediaPost, DeletePost } from "../controllers/posts.controller.js"
+import { GetPosts, CreateTextPost, CreateMediaPost, DeletePost, TogglePostLike } from "../controllers/posts.controller.js"
 import { authMiddleware } from "../middleware/auth.middleware.js"
 import { GetUser , signup , Login } from "../controllers/user.controller.js"
 const router = express.Router()
@@ -39,6 +39,8 @@ router.use((err, req, res, next) => {
 });
 
 router.delete("/delete-post", DeletePost)
+router.put("/toggle-post-like", TogglePostLike)
+
 // new user created
 router.post("/signup", signup)
 router.post("/login",Login)

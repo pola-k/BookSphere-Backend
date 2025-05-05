@@ -1,4 +1,6 @@
 import Post from "../models/post.js"
+import PostLikes from "../models/post_likes.js"
+import User from "../models/user.js"
 import { s3 } from "../index.js"
 import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -76,6 +78,22 @@ const GetPosts = async (request, response) => { // user's posts for profile && r
 
                         post_obj.media = signed_urls;
                     }
+
+                    const user = await User.findByPk(post.user_id);
+                    post_obj.setDataValue("username", user.username);
+                
+                    const { count, rows: post_likes_list } = await PostLikes.findAndCountAll(
+                        {
+                            where: { post_id: post.id }
+                        }
+                    );
+
+                    if (count > 0)
+                        post_obj.setDataValue("liked", true);
+                    else
+                        post_obj.setDataValue("liked", false);
+
+                    post_obj.setDataValue("likes_count", count);
 
                     return post_obj;
                 })
@@ -289,4 +307,38 @@ const CreateMediaPost = async (request, response) => {
     }
 }
 
-export { GetPosts, CreateTextPost, CreateMediaPost, DeletePost }
+const TogglePostLike = async (request, response) => {
+
+    const userID = request.body.user_id;
+    const postID = request.body.post_id;
+
+    try {
+        const post_like = await PostLikes.findOne(
+            {
+                where: { user_id: userID, post_id: postID }
+            }
+        );
+
+        if (!post_like) {
+            const like_post = await PostLikes.create(
+                {
+                    user_id: userID,
+                    post_id: postID,
+                }
+            );
+
+            return response.status(201).json({ message: `Post ${postID} Liked By User ${userID}` })
+        }
+
+        else {
+
+            await post_like.destroy()
+            return response.status(200).json({ message: `Post ${postID} Unliked By User ${userID}` })
+        }
+
+    } catch (error) {
+        return response.status(500).json({ message: error.message || "Internal Server Error" });
+    }
+}
+
+export { GetPosts, CreateTextPost, CreateMediaPost, DeletePost, TogglePostLike }
