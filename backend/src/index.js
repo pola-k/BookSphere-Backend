@@ -6,10 +6,15 @@ import listRoutes from "./routes/list.route.js"
 import ratingRoutes from "./routes/rating.route.js"
 import reviewRoutes from "./routes/review.route.js"
 import cors from "cors"
+import cookieParser from "cookie-parser"
 const app = express()
-
+const corsOptions = {
+  origin: 'http://localhost:5173', // Replace with your frontend origin
+  credentials: true, // Allow cookies and HTTP auth headers to be sent
+};
+app.use(cookieParser());
 app.use(express.json());
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors(corsOptions));
 app.use("/api/auth", authRoutes)
 app.use("/api/getbooksdata", booksData)
 app.use("/api/list", listRoutes)

@@ -16,7 +16,7 @@ router.delete("/delete-comment", DeleteComment)
 router.put("/update-comment", EditComment)
 
 // user ki profile ka data access karna 
-router.get("/profile/", GetUser)
+router.get("/profile/:user_id", GetUser)
 
 router.get("/get-posts", GetPosts)
 router.post("/create-text-post", CreateTextPost)
@@ -44,5 +44,4 @@ router.put("/toggle-post-like", TogglePostLike)
 // new user created
 router.post("/signup", signup)
 router.post("/login",Login)
-
 export default router
