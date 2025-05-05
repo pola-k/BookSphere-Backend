@@ -20,7 +20,7 @@ router.get("/profile/:user_id", GetUser)
 
 router.get("/get-posts", GetPosts)
 router.post("/create-text-post", CreateTextPost)
-router.post("/create-media-post", upload.array("media", 10), (req, res, next) => {
+router.post("/create-media-post", upload.array("media[]", 10), (req, res, next) => {
     try {
         CreateMediaPost(req, res);
     } catch (err) {

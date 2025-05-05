@@ -1,6 +1,7 @@
 import Post from "../models/post.js"
 import { s3 } from "../index.js"
-import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3"
+import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import fs from "fs"
 import path from "path"
 import { error } from "console"
@@ -18,6 +19,8 @@ const GetPosts = async (request, response) => { // user's posts for profile && r
             return response.status(404).json({ error: "type of posts cannot be null" });
         }
 
+        let fetched_posts = []
+
         if (type === "user") {
 
             if (!userID)
@@ -31,7 +34,7 @@ const GetPosts = async (request, response) => { // user's posts for profile && r
                 }
             );
 
-            return response.status(200).json({ posts: posts_list })
+            fetched_posts = posts_list;
         }
 
         else if (type === "home") {
@@ -43,11 +46,44 @@ const GetPosts = async (request, response) => { // user's posts for profile && r
                 }
             );
 
-            return response.status(200).json({ posts: posts_list })
+            fetched_posts = posts_list;
         }
 
         else
             return response.status(404).json({ error: "Invalid type of posts" });
+
+        if (fetched_posts.length > 0) {
+
+            fetched_posts = await Promise.all(
+                fetched_posts.map(async (post) => {
+
+                    let post_obj = post;
+
+                    if (Array.isArray(post_obj.media) && post_obj.media.length > 0) {
+
+                        const signed_urls = await Promise.all(
+                            post_obj.media.map(async (mediaFile) => {
+
+                                const command = new GetObjectCommand({
+                                    Bucket: process.env.R2_BUCKET_NAME,
+                                    Key: mediaFile,
+                                });
+
+                                const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 }); // 1 hour
+                                return signedUrl;
+                            })
+                        );
+
+                        post_obj.media = signed_urls;
+                    }
+
+                    return post_obj;
+                })
+            );
+        }
+
+        // console.log("FINAL POSTS", fetched_posts);
+        return response.status(200).json({ posts: fetched_posts });
 
     } catch (err) {
 
@@ -57,8 +93,25 @@ const GetPosts = async (request, response) => { // user's posts for profile && r
 
 const DeletePost = async (request, response) => {
 
+    const deleteFileFromR2 = async (filePath) => {
+
+        const deleteParams = {
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: filePath,
+        };
+
+        try {
+            const command = new DeleteObjectCommand(deleteParams);
+            await s3.send(command);
+
+        } catch (deleteErr) {
+            console.error(`ERROR: Failed to delete file from R2 during Post Deletion.`, deleteErr);
+        }
+    };
+
     try {
-        const postID = request.query.post_id
+        const userID = request.query.user_id;
+        const postID = request.query.post_id;
 
         if (!postID) {
             return response.status(404).json({ error: "post_id cannot be null" });
@@ -69,6 +122,13 @@ const DeletePost = async (request, response) => {
         if (!post) {
             return response.status(404).json({ error: "Post Not Found" })
         }
+
+        if (post.user_id != userID)
+            return response.status(403).json("Unauthorized Access. Only Post Author May Delete Their Post")
+
+        // delete files from R2
+        if (post.media.length > 0)
+            await Promise.allSettled(post.media.map(filePath => deleteFileFromR2(filePath)));
 
         await post.destroy()
         return response.status(200).json({ message: "Post Deleted Successfully" })
@@ -125,6 +185,7 @@ const CreateMediaPost = async (request, response) => {
 
     const logPrefix = "[CreateMediaPost]";
     let uploadedFilenames = [];
+    console.log("Request Format for Create-Media-Post: ", request.body, "\n", request.files)
 
     try {
         const { user_id, title, description } = request.body;
