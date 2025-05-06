@@ -14,7 +14,7 @@ import {
     DeletePost, TogglePostLike,
 } from "../controllers/posts.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-import { GetUser, signup, Login } from "../controllers/user.controller.js";
+import { GetUser, signup, Login ,Logout} from "../controllers/user.controller.js";
 import {
     SavePost,
     UnsavePost,
@@ -66,4 +66,5 @@ router.put("/toggle-post-like", TogglePostLike)
 // new user created
 router.post("/signup", signup)
 router.post("/login",Login)
+router.post("/logout",Logout)
 export default router

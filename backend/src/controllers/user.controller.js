@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 const signup = async (req, res) => {
   try {
-    const { username,password,email}= req.body;
+    const { name,username,password,email}= req.body;
     const uid = uuidv4();
     if(!username) {
       return res.status(400).json({ message: "Username is required" });
@@ -15,8 +15,12 @@ const signup = async (req, res) => {
     {
       return res.status(400).json({message : "email is required"});
     }
+    if(!name)
+    {
+      return res.status(400).json({message : "name is not entered"});
+    }
 
-    if (!username || !email || !password ) {
+    if (!username || !email || !password   || !name) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -31,7 +35,7 @@ const signup = async (req, res) => {
       id: uid,
       username,
       email,
-      name : "default",
+      name ,
       password: hashedPassword,
       bio:  "", // Default to empty string if not provided
       image:  "", // Default to empty string if not provided
@@ -178,5 +182,26 @@ const GetUser = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-export  {GetUser , signup , Login}
+
+const Logout = (req, res) => {
+  try {
+    // Clear the cookie named "token"
+    res.clearCookie("token", {
+      httpOnly: false,  // match your login settings
+      secure: false,    // match your login settings
+      sameSite: 'Lax'
+    });
+
+    // Optionally: instruct client to remove any stored user_id/sessionStorage
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully"
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || "Internal server error" });
+  }
+};
+
+
+export  {GetUser , signup , Login , Logout}
 
