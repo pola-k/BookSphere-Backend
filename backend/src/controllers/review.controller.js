@@ -31,7 +31,6 @@ export const getReview = async (req, res) => {
             include: [{ model: associations.User, attributes: ["username", "image"] }],
         });
 
-        console.log("Reviews:", reviews);
         return res.status(200).json(reviews);
     } 
     catch (error) 
