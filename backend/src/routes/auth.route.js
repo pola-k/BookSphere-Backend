@@ -50,7 +50,7 @@ router.post("/login", Login);
 // 🔖 Saved post routes (✅ Secured with authMiddleware)
 router.post("/save-post", authMiddleware, SavePost);
 router.post("/unsave-post", authMiddleware, UnsavePost);
-router.get("/saved-posts", authMiddleware, GetSavedPosts);
+router.get("/get-saved-posts", authMiddleware, GetSavedPosts);
 
 // ❗ Custom error handler
 router.use((err, req, res, next) => {

@@ -1,6 +1,7 @@
 import Post from "../models/post.js"
 import PostLikes from "../models/post_likes.js"
 import User from "../models/user.js"
+import SavedPost from "../models/saved_post.js"
 import { s3 } from "../index.js"
 import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -94,6 +95,21 @@ const GetPosts = async (request, response) => { // user's posts for profile && r
                         post_obj.setDataValue("liked", false);
 
                     post_obj.setDataValue("likes_count", count);
+                    
+
+                    const saved_flag = await SavedPost.findOne(
+                        {
+                            where: 
+                            {   user_id: userID,
+                                post_id: post.id 
+                            }
+                        }
+                    );
+
+                    if (saved_flag)
+                        post_obj.setDataValue("isSaved", true);
+                    else
+                        post_obj.setDataValue("isSaved", false);
 
                     return post_obj;
                 })
