@@ -162,7 +162,7 @@ const GetUser = async (req, res) => {
       username: user.username,
       fullName: user.name,
       description: user.bio || "", // Handle null values
-      imageUrl: user.image || "/default-profile-pic.jpg" // Fallback image
+      imageUrl: user.image || "/images/default-profile-image.jpg" // Fallback image
     });
 
   } catch (error) {
