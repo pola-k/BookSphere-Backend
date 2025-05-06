@@ -11,7 +11,7 @@ import {
     GetPosts,
     CreateTextPost,
     CreateMediaPost,
-    DeletePost,
+    DeletePost, TogglePostLike,
 } from "../controllers/posts.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import { GetUser, signup, Login } from "../controllers/user.controller.js";
@@ -29,13 +29,12 @@ router.post("/create-comment", CreateComment);
 router.delete("/delete-comment", DeleteComment);
 router.put("/update-comment", EditComment);
 
-// 👤 User profile
-router.get("/profile/:id", GetUser);
+// user ki profile ka data access karna 
+router.get("/profile/:user_id", GetUser)
 
-// 📝 Post routes
-router.get("/get-posts", GetPosts);
-router.post("/create-text-post", CreateTextPost);
-router.post("/create-media-post", upload.array("media", 10), (req, res, next) => {
+router.get("/get-posts", GetPosts)
+router.post("/create-text-post", CreateTextPost)
+router.post("/create-media-post", upload.array("media[]", 10), (req, res, next) => {
     try {
         CreateMediaPost(req, res);
     } catch (err) {
@@ -61,4 +60,10 @@ router.use((err, req, res, next) => {
     res.status(500).json({ message: err.message });
 });
 
-export default router;
+router.delete("/delete-post", DeletePost)
+router.put("/toggle-post-like", TogglePostLike)
+
+// new user created
+router.post("/signup", signup)
+router.post("/login",Login)
+export default router
