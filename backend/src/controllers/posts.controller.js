@@ -7,7 +7,80 @@ import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sd
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import fs from "fs"
 import path from "path"
-import { error } from "console"
+
+
+
+const GetSinglePost = async (request, response) => { // user's posts for profile && recommended posts on homepage --> 'type' key in request
+
+    try {
+
+        const post_id = request.query.post_id
+        const user_id = request.query.user_id
+        let fetched_post = await Post.findByPk(post_id);
+
+        if (fetched_post) {
+
+            if (Array.isArray(fetched_post.media) && fetched_post.media.length > 0) {
+
+                const signed_urls = await Promise.all(
+                    fetched_post.media.map(async (mediaFile) => {
+
+                        const command = new GetObjectCommand({
+                            Bucket: process.env.R2_BUCKET_NAME,
+                            Key: mediaFile,
+                        });
+
+                        const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 }); // 1 hour
+                        return signedUrl;
+                    })
+                );
+
+                fetched_post.media = signed_urls;
+            }
+
+            const user = await User.findByPk(fetched_post.user_id);
+            fetched_post.setDataValue("username", user.username);
+
+            const { count, rows: post_likes_list } = await PostLikes.findAndCountAll(
+                {
+                    where: { post_id: fetched_post.id }
+                }
+            );
+
+            if (count > 0)
+                fetched_post.setDataValue("liked", true);
+            else
+                fetched_post.setDataValue("liked", false);
+
+            fetched_post.setDataValue("likes_count", count);
+
+
+            const saved_flag = await SavedPost.findOne(
+                {
+                    where:
+                    {
+                        user_id: user_id,
+                        post_id: fetched_post.id
+                    }
+                }
+            );
+
+            if (saved_flag)
+                fetched_post.setDataValue("isSaved", true);
+            else
+                fetched_post.setDataValue("isSaved", false);
+
+            return fetched_post;
+        }
+
+        // console.log("SINGLE POSTS", fetched_posts);
+        return response.status(200).json({ posts: fetched_posts });
+
+    } catch (err) {
+
+        return response.status(500).json({ error: err.message || "Internal Server Error" });
+    }
+}
 
 const GetPosts = async (request, response) => { // user's posts for profile && recommended posts on homepage --> 'type' key in request
 
@@ -82,26 +155,35 @@ const GetPosts = async (request, response) => { // user's posts for profile && r
 
                     const user = await User.findByPk(post.user_id);
                     post_obj.setDataValue("username", user.username);
-                
-                    const { count, rows: post_likes_list } = await PostLikes.findAndCountAll(
+
+                    const count = await PostLikes.count(
                         {
                             where: { post_id: post.id }
                         }
                     );
+                    post_obj.setDataValue("likes_count", count);
 
-                    if (count > 0)
+                    const liked_flag = await PostLikes.findOne(
+                        {
+                            where: {
+                                user_id: userID,
+                                post_id: post.id,
+                            }
+                        }
+                    );
+
+                    if (liked_flag)
                         post_obj.setDataValue("liked", true);
                     else
                         post_obj.setDataValue("liked", false);
 
-                    post_obj.setDataValue("likes_count", count);
-                    
 
                     const saved_flag = await SavedPost.findOne(
                         {
-                            where: 
-                            {   user_id: userID,
-                                post_id: post.id 
+                            where:
+                            {
+                                user_id: userID,
+                                post_id: post.id
                             }
                         }
                     );
@@ -357,4 +439,4 @@ const TogglePostLike = async (request, response) => {
     }
 }
 
-export { GetPosts, CreateTextPost, CreateMediaPost, DeletePost, TogglePostLike }
+export { GetSinglePost, GetPosts, CreateTextPost, CreateMediaPost, DeletePost, TogglePostLike }

@@ -4,7 +4,6 @@ import Author from "../models/author.js"
 import Genre from "../models/genre.js"
 import Book_Author from "../models/book_author.js"
 import Book_Genre from "../models/book_genre.js"
-import assoications from "../models/associations.js"
 
 export const getBooksDataByGenre = async (req, res) => {
     const genre = req.params.genre;

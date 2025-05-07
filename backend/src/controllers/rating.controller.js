@@ -1,5 +1,4 @@
 import Rating from "../models/rating.js";
-import assoications from "../models/associations.js";
 
 export const getRating = async (req, res) => {
     try 

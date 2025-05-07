@@ -8,6 +8,7 @@ import {
     EditComment,
 } from "../controllers/comments.controller.js";
 import {
+    GetSinglePost,
     GetPosts,
     CreateTextPost,
     CreateMediaPost,
@@ -32,6 +33,7 @@ router.put("/update-comment", EditComment);
 // user ki profile ka data access karna 
 router.get("/profile/:user_id", GetUser)
 
+router.get("/get-single-post", GetSinglePost)
 router.get("/get-posts", GetPosts)
 router.post("/create-text-post", CreateTextPost)
 router.post("/create-media-post", upload.array("media[]", 10), (req, res, next) => {

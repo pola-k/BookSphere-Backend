@@ -1,5 +1,5 @@
 import { sequelize } from "./index.js";
-import "./models/assoications.js"
+import "./models/associations.js"
 
 const syncDatabase = async () => {
   try {

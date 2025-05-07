@@ -13,6 +13,7 @@ import Rating from "./rating.js";
 import Summary from "./summary.js";
 import PaymentPlan from "./payment_plan.js";
 import PostLikes from "./post_likes.js";
+import CommentLikes from "./comment_likes.js";
 
 // User can have many posts
 User.hasMany(Post, { foreignKey: "user_id" });
@@ -74,4 +75,4 @@ Summary.belongsTo(Book, { foreignKey: "book_id" });
 
 
 
-export default { User, Post, SavedPost, Comment, Book, Author, Genre, BooksList, BookGenre, BookAuthor, Review, Rating, Summary, PaymentPlan, PostLikes };
+export default { User, Post, SavedPost, Comment, Book, Author, Genre, BooksList, BookGenre, BookAuthor, Review, Rating, Summary, PaymentPlan, PostLikes, CommentLikes };
