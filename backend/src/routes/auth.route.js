@@ -15,12 +15,8 @@ import {
     DeletePost, TogglePostLike,
 } from "../controllers/posts.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-import { GetUser, signup, Login ,Logout} from "../controllers/user.controller.js";
-import {
-    SavePost,
-    UnsavePost,
-    GetSavedPosts,
-} from "../controllers/savedPost.controller.js";
+import { GetUser, signup, Login, GetUserDetails, Logout } from "../controllers/user.controller.js";
+import {SavePost,UnsavePost,GetSavedPosts} from "../controllers/savedPost.controller.js";
 
 const router = express.Router();
 
@@ -32,6 +28,7 @@ router.put("/update-comment", EditComment);
 
 // user ki profile ka data access karna 
 router.get("/profile/:user_id", GetUser)
+router.get("/user/getUserDetails", GetUserDetails)
 
 router.get("/get-single-post", GetSinglePost)
 router.get("/get-posts", GetPosts)
@@ -66,7 +63,5 @@ router.delete("/delete-post", DeletePost)
 router.put("/toggle-post-like", TogglePostLike)
 
 // new user created
-router.post("/signup", signup)
-router.post("/login",Login)
 router.post("/logout",Logout)
 export default router

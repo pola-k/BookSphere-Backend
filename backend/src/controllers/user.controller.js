@@ -121,8 +121,6 @@ const Login = async (req, res) => {
   }
 };
  
-
-
 const GetUser = async (req, res) => {
   try {
     // return res.status(200).json({message:"profile mil gai"})
@@ -183,6 +181,55 @@ const GetUser = async (req, res) => {
   }
 };
 
+const GetUserDetails = async (req, res) => {
+  try 
+  {
+    const token = req.cookies?.token;
+    if (!token) 
+    {
+      return res.status(401).json({ error: "Unauthorized: No token provided" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await User.findOne(
+      {
+      where: { 
+
+        id:decoded.id
+      },
+        attributes: ['id', 'image', 'username']
+      });
+
+    if (!user) {
+      return res.status(404).json({ error: "User  is not found" });
+    }
+
+    return res.status(200).json({
+      id: user.id,
+      username: user.username,
+      user_img: user.image || "/images/default-profile-image.jpg"
+    });
+
+  } 
+  catch (error) 
+  {
+    console.error("User Details API error:", error);
+
+    if (error.name === 'JsonWebTokenError') 
+    {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    if (error.name === 'TokenExpiredError') 
+    {
+      return res.status(401).json({ error: "Token expired" });
+    }
+
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
 const Logout = (req, res) => {
   try {
     // Clear the cookie named "token"
@@ -203,5 +250,5 @@ const Logout = (req, res) => {
 };
 
 
-export  {GetUser , signup , Login , Logout}
+export  {GetUserDetails, GetUser , signup , Login , Logout}
 
