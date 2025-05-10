@@ -69,20 +69,22 @@ const GetSavedPosts = async (request, response) => { // user's posts for profile
 
     try {
         const userID = request.query.user_id
-        // const page = parseInt(request.query.page) || 1
-        // const limit = parseInt(request.query.limit) || 10
-        // const offset = (page - 1) * limit
+        const page = parseInt(request.query.page) || 1
+        const limit = parseInt(request.query.limit) || 10
+        const offset = (page - 1) * limit
 
         let joined_savedPosts = await SavedPost.findAll({
             where: { user_id: userID },
+            limit: limit,
+            offset: offset,
             include: [{
-              model: Post,
-              as: 'post',
-              attributes: { exclude: [] } 
+                model: Post,
+                as: 'post',
+                attributes: { exclude: [] }
             }],
             attributes: [] // exclude SavedPost attributes
-          });
-          
+        });
+
         let savedPosts = joined_savedPosts.map(entry => entry.post);
 
         if (savedPosts.length > 0) {
@@ -112,7 +114,7 @@ const GetSavedPosts = async (request, response) => { // user's posts for profile
 
                     const user = await User.findByPk(post.user_id);
                     post_obj.setDataValue("username", user.username);
-                
+
                     const { count, rows: post_likes_list } = await PostLikes.findAndCountAll(
                         {
                             where: { post_id: post.id }
@@ -125,13 +127,14 @@ const GetSavedPosts = async (request, response) => { // user's posts for profile
                         post_obj.setDataValue("liked", false);
 
                     post_obj.setDataValue("likes_count", count);
-                    
+
 
                     const saved_flag = await SavedPost.findOne(
                         {
-                            where: 
-                            {   user_id: userID,
-                                post_id: post.id 
+                            where:
+                            {
+                                user_id: userID,
+                                post_id: post.id
                             }
                         }
                     );
