@@ -6,6 +6,7 @@ import {
     CreateComment,
     DeleteComment,
     EditComment,
+    ToggleCommentLike,
 } from "../controllers/comments.controller.js";
 import {
     GetSinglePost,
@@ -17,6 +18,7 @@ import {
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import { GetUser, signup, Login, GetUserDetails, Logout } from "../controllers/user.controller.js";
 import {SavePost,UnsavePost,GetSavedPosts} from "../controllers/savedPost.controller.js";
+import { GetSearchResults } from "../controllers/search.controller.js";
 
 const router = express.Router();
 
@@ -24,7 +26,8 @@ const router = express.Router();
 router.get("/get-comments", GetComments);
 router.post("/create-comment", CreateComment);
 router.delete("/delete-comment", DeleteComment);
-router.put("/update-comment", EditComment);
+router.put("/edit-comment", EditComment);
+router.put("/toggle-comment-like", ToggleCommentLike);
 
 // user ki profile ka data access karna 
 router.get("/profile/:user_id", GetUser)
@@ -64,4 +67,6 @@ router.put("/toggle-post-like", TogglePostLike)
 
 // new user created
 router.post("/logout",Logout)
+
+router.get("/search", GetSearchResults);
 export default router
