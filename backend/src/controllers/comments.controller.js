@@ -122,7 +122,7 @@ const GetComments = async (request, response) => {
             comment.username = userMap.get(comment.user_id) || "Unknown";
             comment.likes_count = allLikes.filter(like => like.comment_id === comment.id).length;
             comment.liked = !!allLikes.find(like =>
-                like.comment_id === comment.id && like.user_id === Number(currentUserID)
+                like.comment_id === comment.id && like.user_id === currentUserID
             );
 
             commentMap.set(comment.id, comment);
@@ -223,7 +223,7 @@ const EditComment = async (request, response) => {
             return response.status(400).json("Comment Not Found")
 
         await comment.update({ text })
-        return response.status(200).json("Comment Updated Successfully")
+        return response.status(200).json({ message: "Comment Updated Successfully", text: comment.text})
 
     } catch (err) {
 
@@ -231,4 +231,38 @@ const EditComment = async (request, response) => {
     }
 }
 
-export { GetComments, CreateComment, DeleteComment, EditComment }
+const ToggleCommentLike = async (request, response) => {
+
+    const userID = request.body.user_id;
+    const commentID = request.body.comment_id;
+
+    try {
+        const comment_like = await CommentLikes.findOne(
+            {
+                where: { user_id: userID, comment_id: commentID }
+            }
+        );
+
+        if (!comment_like) {
+            const like_comment = await CommentLikes.create(
+                {
+                    user_id: userID,
+                    comment_id: commentID,
+                }
+            );
+
+            return response.status(201).json({ message: `Comment ${commentID} Liked By User ${userID}` })
+        }
+
+        else {
+
+            await comment_like.destroy()
+            return response.status(200).json({ message: `Comment ${commentID} Unliked By User ${userID}` })
+        }
+
+    } catch (error) {
+        return response.status(500).json({ message: error.message || "Internal Server Error" });
+    }
+}
+
+export { GetComments, CreateComment, DeleteComment, EditComment, ToggleCommentLike }
