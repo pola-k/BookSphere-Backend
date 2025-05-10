@@ -3,7 +3,69 @@ import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import dotenv from "dotenv";
+import { s3 } from "../db.js"
+import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import fs from "fs"
+import path from "path"
+
 dotenv.config();
+const GetUser = async (req, res) => {
+  try {
+    const token = req.cookies?.token;
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized: No token provided" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (decoded.id !== req.params.user_id) {
+      return res.status(403).json({ error: "Forbidden: You can only access your own profile" });
+    }
+
+    const user = await User.findOne({
+      where: { id: req.params.user_id },
+      attributes: { exclude: ['password', 'resetToken'] }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    let imageUrl = "/images/default-profile-image.jpg"; // fallback
+    if (user.image) {
+      try {
+        const command = new GetObjectCommand({
+          Bucket: process.env.R2_BUCKET_NAME,
+          Key: user.image,
+        });
+        imageUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+      } catch (err) {
+        console.error("Failed to generate signed URL for image:", err);
+      }
+    }
+
+    return res.status(200).json({
+      id: user.id,
+      username: user.username,
+      fullName: user.name,
+      description: user.bio || "",
+      imageUrl
+    });
+
+  } catch (error) {
+    console.error("Profile API error:", error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: "Token expired" });
+    }
+
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 const signup = async (req, res) => {
   try {
     const { name,username,password,email}= req.body;
@@ -121,65 +183,7 @@ const Login = async (req, res) => {
   }
 };
  
-const GetUser = async (req, res) => {
-  try {
-    // return res.status(200).json({message:"profile mil gai"})
-    // 1. Verify the HTTP-only cookie (JWT token)
 
-
-    const token = req.cookies?.token;
-    if (!token) {
-      return res.status(401).json({ error: "Unauthorized: No token provided" });
-    }
-
-    // return res.status(200).json({message:"profile mil gai"});
-    // 2. Verify the token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // 3. Check if requested user ID matches token's userId (prevent data leaks)
-    // return res.status(200).json({ my_id : decoded.id,
-        // });
-    if (decoded.id !== req.params.user_id) {
-      return res.status(403).json({ error: "forbidden: You can only access your own profile" });
-    }
-
-    // 4. Fetch user from database
-    const user = await User.findOne(
-      {
-      where: { 
-
-        id:req.params.user_id
-      },
-        attributes: { exclude: ['password', 'resetToken'] }
-      });
-
-    if (!user) {
-      return res.status(404).json({ error: "User  is not found" });
-    }
-
-    // 5. Return safe user data
-    return res.status(200).json({
-      id: user.id,
-      username: user.username,
-      fullName: user.name,
-      description: user.bio || "", // Handle null values
-      imageUrl: user.image || "/images/default-profile-image.jpg" // Fallback image
-    });
-
-  } catch (error) {
-    console.error("Profile API error:", error);
-    
-    // Handle specific JWT errors
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ error: "Invalid token" });
-    }
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ error: "Token expired" });
-    }
-
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
 
 const GetUserDetails = async (req, res) => {
   try 
@@ -248,7 +252,134 @@ const Logout = (req, res) => {
     return res.status(500).json({ error: error.message || "Internal server error" });
   }
 };
+const updateProfile = async (request, response) => {
+  const logPrefix = "[updateProfile]";
+  let uploadedFilename = "";
+
+  try {
+    console.log(`${logPrefix} Request body:`, request.body);
+    console.log(`${logPrefix} Request file:`, request.file);
+
+    const { user_id, name, email, password } = request.body;
+    const file = request.file; // Handling a single file upload
+
+    if (!user_id) {
+      console.log(`${logPrefix} User ID missing`);
+      return response.status(400).json({ message: "user_id is required" });
+    }
+
+    const user = await User.findByPk(user_id);
+    if (!user) {
+      console.log(`${logPrefix} User not found`);
+      return response.status(404).json({ message: "User not found" });
+    }
+
+    // Helper to delete from R2 if an old image exists
+    const deleteFromR2 = async (key) => {
+      try {
+        console.log(`${logPrefix} Deleting from R2:`, key);
+        await s3.send(new DeleteObjectCommand({
+          Bucket: process.env.R2_BUCKET_NAME,
+          Key: key
+        }));
+      } catch (err) {
+        console.error(`${logPrefix} failed to delete ${key} from R2`, err);
+      }
+    };
+
+    // Delete the old image if it exists
+    if (user.image) {
+      console.log(`${logPrefix} Deleting existing image from R2`);
+      await deleteFromR2(user.image);
+    }
+
+    // Upload the new file to R2
+    if (file) {
+      console.log(`${logPrefix} Uploading new file:`, file.filename);
+      const key = `uploads/${file.filename}`; // Save files in the "uploads" folder
+      const uploadParams = {
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: key,
+        Body: fs.createReadStream(file.path),
+        ContentType: file.mimetype,
+        ACL: 'private', // Keep the file private
+      };
+
+      try {
+        await s3.send(new PutObjectCommand(uploadParams));
+        uploadedFilename = key; // Store the uploaded file's key
+        // Clean up the local file after successful R2 upload
+        fs.unlink(file.path, (err) => {
+          if (err) {
+            console.error(`Error deleting temporary file: ${file.path}`, err);
+          } else {
+            console.info(`Successfully deleted temporary file: ${file.path}`);
+          }
+        });
+      } catch (uploadErr) {
+        console.error(`${logPrefix} Error uploading to R2:`, uploadErr);
+        fs.unlink(file.path, (err) => console.error(`Error deleting file after failed upload: ${file.path}`, err));
+        return response.status(500).json({ message: "Error uploading image. Please try again." });
+      }
+    }
+
+    // Prepare user update data
+    const updates = {};
+    if (name) updates.name = name;
+    if (email) updates.email = email;
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      updates.password = await bcrypt.hash(password, salt);
+    }
+
+    // If an image was uploaded, save its filename (path) in the database
+    if (uploadedFilename) {
+      updates.image = uploadedFilename;
+    }
+
+    // Update user in the database
+    const updatedUser = await user.update(updates);
+
+    // Generate signed URL for the uploaded image
+    let signedImageUrl = null;
+    if (updatedUser.image) {
+      const command = new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: updatedUser.image,
+      });
+
+      signedImageUrl = await getSignedUrl(s3, command, { expiresIn: 3600 }); // URL valid for 1 hour
+    }
+
+    return response.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        image: signedImageUrl // Return signed URL for the uploaded image
+      },
+    });
+
+  } catch (err) {
+    console.error(`${logPrefix} Error occurred:`, err);
+
+    // Rollback file deletion from R2 in case of error
+    if (uploadedFilename) {
+      await s3.send(new DeleteObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: uploadedFilename,
+      }));
+    }
+
+    return response.status(500).json({
+      message: err.message || "Could not update profile. Please try again.",
+    });
+  }
+};
 
 
-export  {GetUserDetails, GetUser , signup , Login , Logout}
+
+
+export  {GetUserDetails, GetUser ,updateProfile, signup , Login , Logout}
 

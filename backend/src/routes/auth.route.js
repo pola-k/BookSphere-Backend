@@ -16,7 +16,7 @@ import {
     DeletePost, TogglePostLike,
 } from "../controllers/posts.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-import { GetUser, signup, Login, GetUserDetails, Logout } from "../controllers/user.controller.js";
+import { GetUser, signup,updateProfile, Login, GetUserDetails, Logout } from "../controllers/user.controller.js";
 import {SavePost,UnsavePost,GetSavedPosts} from "../controllers/savedPost.controller.js";
 import { GetSearchResults } from "../controllers/search.controller.js";
 
@@ -43,6 +43,17 @@ router.post("/create-media-post", upload.array("media[]", 10), (req, res, next) 
         next(err);
     }
 });
+
+router.post("/updateProfile",upload.single("profile_pic"), (req, res, next) => {
+  try {
+      updateProfile(req, res);
+  }
+  catch (err) {
+      next(err);
+  }
+  
+});
+
 router.delete("/delete-post", DeletePost);
 
 // 🔐 Auth routes
