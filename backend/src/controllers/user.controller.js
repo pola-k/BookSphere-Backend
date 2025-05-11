@@ -260,7 +260,7 @@ const updateProfile = async (request, response) => {
     console.log(`${logPrefix} Request body:`, request.body);
     console.log(`${logPrefix} Request file:`, request.file);
 
-    const { user_id, name, email, password } = request.body;
+    const { user_id, name,bio ,email, password } = request.body;
     const file = request.file; // Handling a single file upload
 
     if (!user_id) {
@@ -327,6 +327,7 @@ const updateProfile = async (request, response) => {
     const updates = {};
     if (name) updates.name = name;
     if (email) updates.email = email;
+    if(bio) updates.bio = bio;
     if (password) {
       const salt = await bcrypt.genSalt(10);
       updates.password = await bcrypt.hash(password, salt);
@@ -357,6 +358,7 @@ const updateProfile = async (request, response) => {
         id: updatedUser.id,
         name: updatedUser.name,
         email: updatedUser.email,
+        bio: updatedUser.bio,
         image: signedImageUrl // Return signed URL for the uploaded image
       },
     });
