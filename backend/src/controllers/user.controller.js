@@ -8,6 +8,8 @@ import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sd
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import fs from "fs"
 import path from "path"
+import PaymentPlan from "../models/payment_plan.js";
+
 
 dotenv.config();
 const GetUser = async (req, res) => {
@@ -380,8 +382,35 @@ const updateProfile = async (request, response) => {
   }
 };
 
+const SubscribeUser = async (req, res) => {
+  const { user_id, plan_id } = req.body;
+
+  try {
+      // Validate user
+      const user = await User.findByPk(user_id);
+      if (!user) {
+          return res.status(404).json({ error: "User not found" });
+      }
+
+      // Validate payment plan
+      const paymentPlan = await PaymentPlan.findByPk(plan_id);
+      if (!paymentPlan) {
+          return res.status(404).json({ error: "Payment Plan not found" });
+      }
+
+      // Update user's payment plan
+      user.plan_id = plan_id;
+      await user.save();
+
+      return res.status(200).json({ message: "User subscribed to the payment plan successfully", user });
+  } catch (error) {
+      return res.status(500).json({ error: error.message || "Internal Server Error" });
+  }
+};
 
 
 
-export  {GetUserDetails, GetUser ,updateProfile, signup , Login , Logout}
+
+
+export  {GetUserDetails, GetUser ,updateProfile, signup , Login , Logout, SubscribeUser}
 

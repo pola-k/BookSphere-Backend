@@ -16,10 +16,10 @@ import {
     DeletePost, TogglePostLike,
 } from "../controllers/posts.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-import { GetUser, signup,updateProfile, Login, GetUserDetails, Logout } from "../controllers/user.controller.js";
+import { GetUser, signup,updateProfile, Login, GetUserDetails, Logout, SubscribeUser } from "../controllers/user.controller.js";
 import {SavePost,UnsavePost,GetSavedPosts} from "../controllers/savedPost.controller.js";
 import { GetSearchResults } from "../controllers/search.controller.js";
-
+import { GetPaymentPlan, AddPaymentPlan, DeletePaymentPlan } from "../controllers/paymentPlan.controller.js";
 const router = express.Router();
 
 // 🗨️ Comment routes
@@ -64,6 +64,13 @@ router.post("/login", Login);
 router.post("/save-post", authMiddleware, SavePost);
 router.post("/unsave-post", authMiddleware, UnsavePost);
 router.get("/get-saved-posts", authMiddleware, GetSavedPosts);
+
+router.get("/payment-plans", GetPaymentPlan);
+router.post("/payment-plans", AddPaymentPlan);
+router.delete("/payment-plans/:id", DeletePaymentPlan);
+
+router.post("/subscribe-user", SubscribeUser);
+
 
 // ❗ Custom error handler
 router.use((err, req, res, next) => {
