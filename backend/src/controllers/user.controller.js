@@ -50,7 +50,9 @@ const GetUser = async (req, res) => {
       username: user.username,
       fullName: user.name,
       description: user.bio || "",
-      imageUrl
+      imageUrl,
+      email: user.email,
+      bio: user.bio,
     });
 
   } catch (error) {
@@ -252,6 +254,7 @@ const Logout = (req, res) => {
     return res.status(500).json({ error: error.message || "Internal server error" });
   }
 };
+
 const updateProfile = async (request, response) => {
   const logPrefix = "[updateProfile]";
   let uploadedFilename = "";
@@ -260,8 +263,8 @@ const updateProfile = async (request, response) => {
     console.log(`${logPrefix} Request body:`, request.body);
     console.log(`${logPrefix} Request file:`, request.file);
 
-    const { user_id, name, email, password } = request.body;
-    const file = request.file; // Handling a single file upload
+    const { user_id, name, email, password, bio , username } = request.body;
+    const file = request.file;
 
     if (!user_id) {
       console.log(`${logPrefix} User ID missing`);
@@ -274,7 +277,6 @@ const updateProfile = async (request, response) => {
       return response.status(404).json({ message: "User not found" });
     }
 
-    // Helper to delete from R2 if an old image exists
     const deleteFromR2 = async (key) => {
       try {
         console.log(`${logPrefix} Deleting from R2:`, key);
@@ -287,34 +289,28 @@ const updateProfile = async (request, response) => {
       }
     };
 
-    // Delete the old image if it exists
     if (user.image) {
       console.log(`${logPrefix} Deleting existing image from R2`);
       await deleteFromR2(user.image);
     }
 
-    // Upload the new file to R2
     if (file) {
       console.log(`${logPrefix} Uploading new file:`, file.filename);
-      const key = `uploads/${file.filename}`; // Save files in the "uploads" folder
+      const key = `uploads/${file.filename}`;
       const uploadParams = {
         Bucket: process.env.R2_BUCKET_NAME,
         Key: key,
         Body: fs.createReadStream(file.path),
         ContentType: file.mimetype,
-        ACL: 'private', // Keep the file private
+        ACL: 'private',
       };
 
       try {
         await s3.send(new PutObjectCommand(uploadParams));
-        uploadedFilename = key; // Store the uploaded file's key
-        // Clean up the local file after successful R2 upload
+        uploadedFilename = key;
         fs.unlink(file.path, (err) => {
-          if (err) {
-            console.error(`Error deleting temporary file: ${file.path}`, err);
-          } else {
-            console.info(`Successfully deleted temporary file: ${file.path}`);
-          }
+          if (err) console.error(`Error deleting temporary file: ${file.path}`, err);
+          else console.info(`Successfully deleted temporary file: ${file.path}`);
         });
       } catch (uploadErr) {
         console.error(`${logPrefix} Error uploading to R2:`, uploadErr);
@@ -323,24 +319,21 @@ const updateProfile = async (request, response) => {
       }
     }
 
-    // Prepare user update data
     const updates = {};
     if (name) updates.name = name;
     if (email) updates.email = email;
+    if (bio) updates.bio = bio;
     if (password) {
       const salt = await bcrypt.genSalt(10);
       updates.password = await bcrypt.hash(password, salt);
     }
-
-    // If an image was uploaded, save its filename (path) in the database
     if (uploadedFilename) {
       updates.image = uploadedFilename;
     }
+    if(username) updates.username = username;
 
-    // Update user in the database
     const updatedUser = await user.update(updates);
 
-    // Generate signed URL for the uploaded image
     let signedImageUrl = null;
     if (updatedUser.image) {
       const command = new GetObjectCommand({
@@ -348,7 +341,7 @@ const updateProfile = async (request, response) => {
         Key: updatedUser.image,
       });
 
-      signedImageUrl = await getSignedUrl(s3, command, { expiresIn: 3600 }); // URL valid for 1 hour
+      signedImageUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
     }
 
     return response.status(200).json({
@@ -357,14 +350,14 @@ const updateProfile = async (request, response) => {
         id: updatedUser.id,
         name: updatedUser.name,
         email: updatedUser.email,
-        image: signedImageUrl // Return signed URL for the uploaded image
+        bio: updatedUser.bio,
+        image: signedImageUrl
       },
     });
 
   } catch (err) {
     console.error(`${logPrefix} Error occurred:`, err);
 
-    // Rollback file deletion from R2 in case of error
     if (uploadedFilename) {
       await s3.send(new DeleteObjectCommand({
         Bucket: process.env.R2_BUCKET_NAME,
@@ -377,9 +370,6 @@ const updateProfile = async (request, response) => {
     });
   }
 };
-
-
-
 
 export  {GetUserDetails, GetUser ,updateProfile, signup , Login , Logout}
 
